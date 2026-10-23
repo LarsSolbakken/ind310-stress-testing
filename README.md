@@ -14,9 +14,10 @@ and portfolio optimization.
 ## Data
 - Daily prices 2004–2024 from Yahoo Finance via `yfinance`.
 - Train: 2004–2018. Test: 2019–2024.
-- Assets: OSEBX (Norway), S&P 500 (`^GSPC`), bond ETF (`AGG`), in local currency.
-- Data is not committed (see `.gitignore`). S&P 500 and AGG are downloaded by `src/data.py`;
-  OSEBX is not on Yahoo before 2013, so save its history as `data/osebx.csv` (date + close columns).
+- Assets: S&P 500 (`^GSPC`) and bond ETF (`AGG`), USD. Add more in `YF_TICKERS` in `src/data.py`.
+- OSEBX is not on Yahoo before 2013; its CSV loader is commented out in `src/data.py` for later.
+- Data is not committed (see `.gitignore`); `src/data.py` downloads it into `data/`.
+- Overview plot: `python -m src.plot_data` -> `results/data_overview.png`.
 
 ## Structure
 ```

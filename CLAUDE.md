@@ -9,8 +9,9 @@ compare against historical simulation, normal distribution and GARCH, backtest
 with the Kupiec test, and do CVaR portfolio optimization.
 
 ## Data
-- Daily prices 2005–2024 from yfinance, stored in `data/` (git-ignored).
-- Strict split: train 2005–2018, test 2019–2024. Never fit anything on test data.
+- Daily prices 2004–2024 from yfinance, stored in `data/` (git-ignored).
+- Assets: OSEBX (from `data/osebx.csv`), S&P 500 and AGG via yfinance. `src/data.py:load_data()` returns (train, test) log returns.
+- Strict split: train 2004–2018, test 2019–2024. Never fit anything on test data.
 
 ## Layout
 - `src/` reusable code; `notebooks/` experiments; `results/` figures/tables.

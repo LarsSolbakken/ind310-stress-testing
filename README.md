@@ -12,9 +12,11 @@ and portfolio optimization.
 5. Do CVaR portfolio optimization.
 
 ## Data
-- Daily prices 2005–2024 from Yahoo Finance via `yfinance`.
-- Train: 2005–2018. Test: 2019–2024.
-- Data is not committed (see `.gitignore`); it is downloaded into `data/`.
+- Daily prices 2004–2024 from Yahoo Finance via `yfinance`.
+- Train: 2004–2018. Test: 2019–2024.
+- Assets: OSEBX (Norway), S&P 500 (`^GSPC`), bond ETF (`AGG`), in local currency.
+- Data is not committed (see `.gitignore`). S&P 500 and AGG are downloaded by `src/data.py`;
+  OSEBX is not on Yahoo before 2013, so save its history as `data/osebx.csv` (date + close columns).
 
 ## Structure
 ```

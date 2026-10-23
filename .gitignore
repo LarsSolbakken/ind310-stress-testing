@@ -1,0 +1,23 @@
+# Data (re-downloadable with yfinance, can be large)
+data/*
+!data/.gitkeep
+
+# Model checkpoints
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+
+# Python / Jupyter caches
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.pytest_cache/
+
+# Secrets and local config
+.env
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

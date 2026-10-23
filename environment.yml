@@ -1,0 +1,21 @@
+name: ind310
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas
+  - scipy
+  - statsmodels
+  - matplotlib
+  - seaborn
+  - scikit-learn
+  - pytorch
+  - cvxpy
+  - jupyterlab
+  - ipykernel
+  - pip
+  - pip:
+      - yfinance
+      - arch

@@ -18,7 +18,7 @@ clustering); ✓ = pass, ✗ = reject at the 5% level.
 | E2 | 2026-10-25 | VAE design choices | train/validation only | exploratory, see entry | Student-t decoder + free bits chosen |
 | E3 | 2026-10-25 | VAE realism check | train 2004-2018 | `a1e95e3` | 6/6 criteria after 60-day memory + clipping |
 | E4 | 2026-10-25 | VAE-frozen backtest | test 2019-2024 | `a1e95e3` | behaves like GARCH-t; fails Kupiec at 99% |
-| E5 | 2026-10-25 | VAE-monthly and VAE-yearly | test 2019-2024 | see entry | pre-registered, not yet run |
+| E5 | 2026-10-25 | VAE-monthly and VAE-yearly | test 2019-2024 | `8fd5478` | retraining helps a little; no VAE variant passes Kupiec |
 
 ---
 
@@ -127,12 +127,57 @@ clustering); ✓ = pass, ✗ = reject at the 5% level.
   treated the market as "as bad as the worst of 2008", not worse.
 
 ## E5 · VAE-monthly and VAE-yearly (rolling retraining) · 2026-10-25
-- **Status:** pre-registered, not yet run.
 - **What:** retrain the VAE from scratch on all data from 2004 up to the day before, every 20
-  trading days (VAE-monthly, like GARCH) or every 252 trading days (VAE-yearly). Compared with all
-  E1 baselines and VAE-frozen in one table.
+  trading days (VAE-monthly, like GARCH; 76 retrainings) or every 252 trading days (VAE-yearly;
+  6 retrainings, data ending 2018-12-31, 2019-12-31, 2020-12-30, 2021-12-30, 2022-12-30,
+  2024-01-03). Compared with all E1 baselines and VAE-frozen in one table. Pre-registered in
+  `8fd5478` before it was run; this completes the three pre-registered VAE variants.
 - **Settings:** exactly the frozen model's (architecture, features, Student-t decoder, free bits,
-  77 epochs, seed 42, no validation or re-tuning). Standardization and clipping range are
-  recomputed from the data available at each retraining. The first retraining sees the same data
-  as VAE-frozen and must reproduce it exactly (checksum `2e7e6b527cd6`).
-- **Outputs (planned):** `results/E5_vae_rolling/`
+  77 epochs, seed 42, no validation or re-tuning); standardization and clipping range recomputed
+  from the data available at each retraining; 10,000 scenarios per day.
+- **Commit:** code `8fd5478`; results committed together with this entry.
+- **Outputs:** `results/E5_vae_rolling/`: `var_backtest_<portfolio>.csv`, `var_forecasts_<portfolio>.csv`,
+  `var_backtest_<portfolio>_<99|95>.png`, `vae_fits.csv` (every retraining: data end date, days,
+  weights checksum), `vae_clipped_days.csv`. The PNGs have the figure title overlapping the first
+  panel's title (a layout bug that appeared with 7 panels, fixed in `490f86c`); numbers are
+  unaffected and the files are kept as produced.
+- **Main numbers, 99% (violations, expected 15.1):**
+
+  | Model | 50/50 | 20/80 | 80/20 |
+  |---|---|---|---|
+  | Historical sim. | 20 (K ✓, C ✗) | 20 (K ✓, C ✗) | 21 (K ✓, C ✗) |
+  | Normal | 31 (K ✗, C ✗) | 29 (K ✗, C ✗) | 33 (K ✗, C ✗) |
+  | GARCH-normal | 34 (K ✗, C ✓) | 39 (K ✗, C ✓) | 34 (K ✗, C ✓) |
+  | GARCH-t | 29 (K ✗, C ✓) | 32 (K ✗, C ✓) | 25 (K ✗, C ✓) |
+  | VAE-frozen | 30 (K ✗, C ✓) | 36 (K ✗, C ✓) | 32 (K ✗, C ✓) |
+  | **VAE-monthly** | **25** (K ✗ p=0.019, C ✓) | **29** (K ✗, C ✓) | **29** (K ✗, C ✓) |
+  | **VAE-yearly** | **26** (K ✗ p=0.011, C ✓) | **30** (K ✗, C ✓) | **29** (K ✗, C ✓) |
+
+- **95% (expected 75.5):** VAE-frozen 102/124/97, VAE-monthly 100/107/96, VAE-yearly 98/113/96;
+  all fail Kupiec and pass Christoffersen.
+- **99% average ES vs average loss on violation days:** VAE-monthly 1.88% vs 1.95% (50/50),
+  1.15% vs 1.14% (20/80), 2.86% vs 2.55% (80/20); VAE-yearly 1.90% vs 1.96%, 1.14% vs 1.19%,
+  2.91% vs 2.60%.
+- **99% violations per year, 2019-2024:**
+
+  | Model | 50/50 | 20/80 | 80/20 |
+  |---|---|---|---|
+  | GARCH-t | 3/7/7/4/2/6 | 0/10/6/9/4/3 | 4/6/7/3/1/4 |
+  | VAE-frozen | 3/8/7/5/2/5 | 0/9/4/9/6/8 | 5/12/7/3/0/5 |
+  | VAE-monthly | 3/9/6/3/0/4 | 0/10/4/7/4/4 | 5/11/6/2/0/5 |
+  | VAE-yearly | 3/9/6/4/0/4 | 0/8/4/11/4/3 | 5/10/6/3/0/5 |
+
+- **Clipping:** forecasts with inputs outside the training range: VAE-frozen 119, VAE-monthly 52,
+  VAE-yearly 90 (of 1,510). In March-April 2020 all three were clipped on 19-20 days: the monthly
+  retraining of 2020-03-11 came just before the worst days, so the crash only entered the
+  training range at the next retraining (2020-04-08).
+- **Checks:** baseline and VAE-frozen rows identical to E4 (tables and daily forecasts, all
+  portfolios); the first retraining of both variants reproduced the frozen model exactly
+  (checksum `2e7e6b527cd6`), so their first 20 (monthly) and 252 (yearly) days equal VAE-frozen's;
+  every retraining used only data up to the trading day before its first forecast. Run time 3.3 min.
+- **Conclusion:** retraining helps a little at 99% (50/50: 30 to 25 violations), mostly in
+  2022-2024 when the new stock-bond regime enters the training data (20/80 in 2024: 8 to 4), but
+  not in the sudden March 2020 crash. VAE-monthly has fewer 99% violations than GARCH-t for 50/50
+  and 20/80, more for 80/20. No VAE variant passes Kupiec at 99% or 95% for any portfolio; all
+  pass Christoffersen. Historical simulation is still the only model that passes Kupiec at 99%,
+  and its violations cluster.

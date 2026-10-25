@@ -1,8 +1,10 @@
-"""Backtest the baseline VaR/ES models on the test period and save results in results/.
+"""Backtest all VaR/ES models (baselines and the VAE) on the test period; results go to results/.
 
-  python -m src.run_baselines                  # 50/50 portfolio
-  python -m src.run_baselines --portfolio 20-80
-  python -m src.run_baselines --portfolio all  # all portfolios in PORTFOLIOS
+  python -m src.run_backtests                  # 50/50 portfolio
+  python -m src.run_backtests --portfolio 20-80
+  python -m src.run_backtests --portfolio all  # all portfolios in PORTFOLIOS
+
+The VAE needs a trained model first: python -m src.train_vae
 """
 import argparse
 
@@ -11,6 +13,7 @@ import pandas as pd
 from src.backtest import level, plot_backtest, run_backtest, summary_table
 from src.data import load_data
 from src.portfolio import make_weights
+from src.vae import VAEVaR
 from src.var_models import GarchVaR, HistoricalSimulation, NormalVaR
 
 PORTFOLIOS = {
@@ -21,13 +24,14 @@ PORTFOLIOS = {
 ALPHAS = (0.01, 0.05)  # 99% and 95%
 
 
-def baseline_models():
+def all_models():
     """Fresh instances every run (GARCH keeps state between days)."""
     return [
         HistoricalSimulation(window=500),
         NormalVaR(window=500),
         GarchVaR(dist="normal", window=1000, refit_every=20),
         GarchVaR(dist="t", window=1000, refit_every=20),
+        VAEVaR(n_scenarios=10_000),
     ]
 
 
@@ -44,7 +48,7 @@ def print_table(table):
 
 def run(name, weights, asset_returns, test_start):
     results = {}
-    for model in baseline_models():
+    for model in all_models():
         print(f"  {model.name} ...", flush=True)
         results[model.name] = run_backtest(model, asset_returns, weights, test_start, ALPHAS)
 

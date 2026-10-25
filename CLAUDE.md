@@ -22,7 +22,15 @@ with the Kupiec test, and do CVaR portfolio optimization.
   up to the day before, VaR/ES as positive losses. Scenario models use `var_es_from_scenarios`.
 - `src/backtest.py:run_backtest` calls `forecast` once per test day in order (models may keep
   state, so use a fresh instance per run); Kupiec + Christoffersen tests, 99% and 95%.
-- Portfolios (daily rebalanced) are defined in `PORTFOLIOS` in `src/run_baselines.py`.
+- Portfolios (daily rebalanced) and the model list are in `src/run_backtests.py`.
+
+## VAE
+- `src/vae.py`: conditional VAE (Student-t decoder, free bits, 60-day summary features clipped to
+  the training range), `ScenarioGenerator`, and the `VAEVaR` plug-in. Design rationale is in its docstring.
+- Order: `python -m src.train_vae` -> `python -m src.vae_realism` (gate: 6 pass criteria fixed in
+  advance) -> `python -m src.run_backtests`. Checkpoint `checkpoints/vae.pt` is git-ignored;
+  retraining is deterministic (seed 42, 1 CPU thread; check the printed weights checksum).
+- Make model choices on fit 2004-2015 / validation 2016-2018 only, never on test-period results.
 
 ## Conventions
 - Environment: conda, `environment.yml` (env name `ind310`). Add new packages there.

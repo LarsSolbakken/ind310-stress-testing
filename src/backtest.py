@@ -112,8 +112,10 @@ def plot_backtest(results, alpha, path, title=""):
         ax.yaxis.set_major_formatter(lambda y, _: f"{y:.0%}")
         ax.set_title(f"{name}: {len(viol)} violations (expected {len(df) * alpha:.0f})",
                      loc="left", color=ink, fontsize=10)
+    # Title at a fixed 0.08 inch from the top (not a fraction of the height, which overlapped the first
+    # panel when there were 7 panels); tight_layout then makes room for it.
     fig.suptitle(f"{title}\nGrey: daily portfolio return. Line: -VaR {L}%. Dots: violations (loss > VaR).",
-                 x=0.01, ha="left", color=ink, fontsize=10)
+                 x=0.01, y=1 - 0.08 / fig.get_figheight(), ha="left", va="top", color=ink, fontsize=10)
     fig.tight_layout()
     fig.savefig(path, dpi=150)
     plt.close(fig)

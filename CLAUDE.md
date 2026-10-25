@@ -16,6 +16,14 @@ with the Kupiec test, and do CVaR portfolio optimization.
 ## Layout
 - `src/` reusable code; `notebooks/` experiments; `results/` figures/tables.
 
+## VaR/ES backtesting
+- Every VaR model (baselines and future VAE/GAN) subclasses `VaRModel` in `src/var_models.py` and
+  implements `forecast(history, weights, alphas) -> {alpha: (VaR, ES)}`: `history` = asset returns
+  up to the day before, VaR/ES as positive losses. Scenario models use `var_es_from_scenarios`.
+- `src/backtest.py:run_backtest` calls `forecast` once per test day in order (models may keep
+  state, so use a fresh instance per run); Kupiec + Christoffersen tests, 99% and 95%.
+- Portfolios (daily rebalanced) are defined in `PORTFOLIOS` in `src/run_baselines.py`.
+
 ## Conventions
 - Environment: conda, `environment.yml` (env name `ind310`). Add new packages there.
 - Use simple returns (not log returns); fix random seeds for reproducibility.

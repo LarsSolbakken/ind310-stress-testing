@@ -8,7 +8,7 @@ and portfolio optimization.
 1. Generate stress scenarios of daily returns with a VAE (later a GAN).
 2. Compute Value-at-Risk (VaR) and Conditional VaR (CVaR) from the scenarios.
 3. Compare against baselines: historical simulation, normal distribution, GARCH.
-4. Backtest VaR with the Kupiec test (proportion-of-failures).
+4. Backtest VaR with the Kupiec and Christoffersen tests.
 5. Do CVaR portfolio optimization.
 
 ## Data
@@ -18,6 +18,20 @@ and portfolio optimization.
 - OSEBX is not on Yahoo before 2013; its CSV loader is commented out in `src/data.py` for later.
 - Data is not committed (see `.gitignore`); `src/data.py` downloads it into `data/`.
 - Overview plot: `python -m src.plot_data` -> `results/data_overview.png`.
+
+## Baseline VaR/ES backtest
+Portfolio of S&P 500 and AGG, rebalanced daily (50/50, 20/80, 80/20). For every test day,
+1-day VaR and ES at 99% and 95% are forecast from data up to the day before with historical
+simulation (500 days), a normal distribution (500 days), GARCH(1,1)-normal and GARCH(1,1)-t
+(1000 days, refit every 20 days). Violations are tested with Kupiec (right number) and
+Christoffersen (no clustering).
+
+```bash
+python -m src.run_baselines                   # 50/50
+python -m src.run_baselines --portfolio all   # all three portfolios
+```
+Outputs in `results/`: `var_backtest_<portfolio>.csv` (table), `var_forecasts_<portfolio>.csv`
+(daily VaR/ES), `var_backtest_<portfolio>_<99|95>.png` (plots).
 
 ## Structure
 ```

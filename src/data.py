@@ -1,4 +1,4 @@
-"""Download prices, convert to daily log returns, and split into train/test.
+"""Download prices, convert to daily simple returns, and split into train/test.
 
 Assets (all downloaded with yfinance, USD):
   - SP500 : ^GSPC
@@ -9,7 +9,6 @@ OSEBX (Norway) is not on Yahoo before 2013; the CSV loader is kept below, commen
 """
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import yfinance as yf
 
@@ -63,8 +62,8 @@ def download_prices(refresh=False):
 
 
 def compute_returns(prices):
-    """Daily log returns on days where all assets traded (different holidays are dropped)."""
-    return np.log(prices.dropna()).diff().dropna()
+    """Daily simple returns (P_t / P_{t-1} - 1) on days where all assets traded (different holidays are dropped)."""
+    return prices.dropna().pct_change().dropna()
 
 
 def split_train_test(returns, split_date=SPLIT_DATE):
@@ -73,5 +72,5 @@ def split_train_test(returns, split_date=SPLIT_DATE):
 
 
 def load_data(refresh=False):
-    """Download everything and return (train, test) DataFrames of log returns."""
+    """Download everything and return (train, test) DataFrames of simple returns."""
     return split_train_test(compute_returns(download_prices(refresh)))

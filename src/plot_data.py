@@ -1,4 +1,4 @@
-"""Plot prices and daily log returns per asset; saves results/data_overview.png.
+"""Plot prices and daily simple returns per asset; saves results/data_overview.png.
 
 Run from the project root:  python -m src.plot_data
 """
@@ -18,7 +18,7 @@ def main():
 
     fig, axes = plt.subplots(2, len(prices.columns), figsize=(11, 6), sharex=True, facecolor=SURFACE)
     for j, (name, color) in enumerate(zip(prices.columns, COLORS)):
-        for i, (series, label) in enumerate([(prices[name], "Price (adj. close)"), (returns[name], "Daily log return")]):
+        for i, (series, label) in enumerate([(prices[name], "Price (adj. close)"), (returns[name], "Daily simple return")]):
             ax = axes[i, j]
             ax.set_facecolor(SURFACE)
             ax.plot(series.index, series.values, color=color, lw=0.8 if i else 1.5)

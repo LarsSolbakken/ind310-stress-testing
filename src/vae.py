@@ -1,9 +1,14 @@
 """Conditional VAE that generates scenarios for tomorrow's asset returns, given the last WINDOW days.
 
 Workflow:
-  python -m src.train_vae       # train on 2004-2018 only, save checkpoints/vae.pt
-  python -m src.vae_realism     # check that generated scenarios look like real returns
-  python -m src.run_backtests   # VAEVaR runs through the same backtest as the baselines
+  python -m src.train_vae                         # train on 2004-2018 only, save checkpoints/vae.pt
+  python -m src.vae_realism --experiment <name>   # check that generated scenarios look like real returns
+  python -m src.run_backtests --experiment <name> # VAE variants run through the same backtest as the baselines
+
+The three VAE variants backtested on 2019-2024 (the only ones, see README):
+  VAEVaR                        "VAE-frozen"   trained once on 2004-2018
+  RollingVAEVaR(refit_every=20)  "VAE-monthly"  retrained every 20 trading days on all data up to the day before
+  RollingVAEVaR(refit_every=252) "VAE-yearly"   the same, every 252 trading days
 
 Inside the model all returns are standardized: (r - training mean) / training std, per asset.
   condition c : summary of the last WINDOW days (see condition_features)
@@ -46,7 +51,8 @@ VOL_HORIZONS = (5, 20, 60)  # days over which realized volatility is measured
 CORR_HORIZONS = (20, 60)  # days over which realized correlation is measured
 WINDOW = max(VOL_HORIZONS)  # days of history the model sees
 FREE_BITS = 0.1
-CHECKPOINT = Path(__file__).resolve().parents[1] / "checkpoints" / "vae.pt"
+EPOCHS = 77  # epochs of the frozen model (early stopping in train_vae); every retraining uses exactly this
+CHECKPOINT =Path(__file__).resolve().parents[1] / "checkpoints" / "vae.pt"
 
 
 def make_deterministic(seed=SEED):
@@ -245,6 +251,12 @@ class ScenarioGenerator:
         """(n, window, assets) standardized returns -> clipped condition features as a tensor."""
         return torch.as_tensor(np.clip(condition_features(z_windows), self.c_min, self.c_max))
 
+    def is_clipped(self, history):
+        """True if the market state at the end of `history` is outside the range seen in training,
+        so that the condition features get clipped."""
+        c = condition_features(self.standardize(history.iloc[-self.window:])[None])
+        return bool(((c < self.c_min) | (c > self.c_max)).any())
+
     def sample(self, history, n, seed):
         """n scenarios of next-day simple returns (DataFrame), given the last `window` rows of history."""
         c = self.conditions(self.standardize(history.iloc[-self.window:])[None]).expand(n, -1)
@@ -279,21 +291,62 @@ class ScenarioGenerator:
         return cls(model, ckpt["assets"], ckpt["mean"], ckpt["std"], ckpt["c_min"], ckpt["c_max"], ckpt["window"])
 
 
+def fit_generator(returns, epochs=EPOCHS, seed=SEED):
+    """Train a CVAE on all of `returns` for a fixed number of epochs (no validation) and return it
+    as a ScenarioGenerator. Standardization and the clipping range come from the same data.
+    Used for the frozen model (train_vae) and for every rolling retraining."""
+    mean, std = returns.mean().to_numpy(), returns.std().to_numpy()
+    c, x = make_samples((returns.to_numpy() - mean) / std)
+    model, _ = train_cvae(x, c, epochs=epochs, seed=seed)
+    return ScenarioGenerator(model, returns.columns, mean, std, c.min(axis=0), c.max(axis=0))
+
+
 class VAEVaR(VaRModel):
-    """Backtest plug-in: VaR/ES from n_scenarios VAE scenarios for the next day.
+    """Backtest plug-in "VAE-frozen": VaR/ES from n_scenarios VAE scenarios for the next day.
 
     The model is frozen (trained on 2004-2018 only); it only reads the last WINDOW days. Each day
     gets its own seed from the date, so reruns and different portfolios use the same scenarios.
+    clipped_days lists the last data date of every forecast whose inputs had to be clipped.
     """
 
-    def __init__(self, path=CHECKPOINT, n_scenarios=10_000, seed=SEED):
+    def __init__(self, path=CHECKPOINT, n_scenarios=10_000, seed=SEED, name="VAE-frozen"):
         make_deterministic(seed)
-        self.generator = ScenarioGenerator.load(path)
-        self.n_scenarios, self.seed = n_scenarios, seed
-        self.name = "VAE"
+        self.generator = ScenarioGenerator.load(path) if path else None
+        self.n_scenarios, self.seed, self.name = n_scenarios, seed, name
+        self.clipped_days = []
 
     def forecast(self, history, weights, alphas):
+        if self.generator.is_clipped(history):
+            self.clipped_days.append(history.index[-1])
         day_seed = self.seed + int(history.index[-1].strftime("%Y%m%d"))
         scenarios = self.generator.sample(history, self.n_scenarios, day_seed)
         port = portfolio_returns(scenarios, weights)
         return {a: var_es_from_scenarios(port, a) for a in alphas}
+
+
+_trained = {}  # (last training date, seed) -> ScenarioGenerator; training is deterministic, so it is shared
+
+
+class RollingVAEVaR(VAEVaR):
+    """VAE retrained from scratch every `refit_every` forecasts on all data up to the day before,
+    with exactly the frozen model's settings (architecture, features, EPOCHS epochs, seed).
+
+    refit_every=20 is "VAE-monthly" (the same rhythm as GARCH), 252 is "VAE-yearly". `fits` records
+    every retraining. Trained models are cached by their last training date, so the portfolios
+    (and the two variants, where dates coincide) share the trainings.
+    """
+
+    def __init__(self, refit_every, name, n_scenarios=10_000, seed=SEED):
+        super().__init__(path=None, n_scenarios=n_scenarios, seed=seed, name=name)
+        self.refit_every, self._calls, self.fits = refit_every, 0, []
+
+    def forecast(self, history, weights, alphas):
+        if self._calls % self.refit_every == 0:
+            key = (history.index[-1], self.seed)
+            if key not in _trained:
+                _trained[key] = fit_generator(history, seed=self.seed)
+            self.generator = _trained[key]
+            self.fits.append({"train_end": history.index[-1].date(), "train_days": len(history),
+                              "checksum": checksum(self.generator.model)})
+        self._calls += 1
+        return super().forecast(history, weights, alphas)

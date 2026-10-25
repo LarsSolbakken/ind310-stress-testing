@@ -12,8 +12,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from src.data import load_data
-from src.vae import (CHECKPOINT, WINDOW, ScenarioGenerator, checksum, iwae_nll, kl_per_dim, make_samples,
-                     train_cvae)
+from src.experiment import RESULTS_DIR
+from src.vae import (CHECKPOINT, EPOCHS, WINDOW, checksum, evaluate, fit_generator, iwae_nll, kl_per_dim,
+                     make_samples, train_cvae)
 
 VAL_START = "2016-01-01"
 INK, MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#e3e2de", "#fcfcfb"
@@ -57,18 +58,25 @@ def main():
           f"(validation loss {full_kl['val_loss'].min():.3f}, validation IWAE NLL "
           f"{iwae_nll(model1, x[is_val], c[is_val]):.3f}), stopped after {len(log1)} epochs")
 
-    # Step 2: retrain on all of 2004-2018 for best_epoch epochs.
-    mean, std = train.mean().to_numpy(), train.std().to_numpy()
-    c, x = make_samples((train.to_numpy() - mean) / std)
-    model, log2 = train_cvae(x, c, epochs=best_epoch)
-    ScenarioGenerator(model, train.columns, mean, std, c.min(axis=0), c.max(axis=0)).save(CHECKPOINT)
+    # Step 2: retrain on all of 2004-2018 for best_epoch epochs (the same function the rolling retraining uses).
+    generator = fit_generator(train, epochs=best_epoch)
+    generator.save(CHECKPOINT)
 
+    model = generator.model
+    c, x = make_samples(generator.standardize(train))
     kl = kl_per_dim(model, x, c)
-    print(f"Step 2: {len(x)} samples, final training loss {log2['train_loss'].iloc[-1]:.3f}, "
+    print(f"Step 2: {len(x)} samples, final training loss {evaluate(model, x, c):.3f}, "
           f"Student-t degrees of freedom nu = {model.nu.item():.2f}")
     print(f"KL per latent dimension: {np.round(kl, 3)} -> {(kl > 0.01).sum()} of {len(kl)} dimensions used")
     print(f"Weights checksum {checksum(model)}, {time.time() - t0:.0f} s, saved {CHECKPOINT}")
-    plot_training(log1, best_epoch, "results/vae_training.png")
+    if best_epoch != EPOCHS:
+        print(f"Note: best epoch {best_epoch} differs from EPOCHS = {EPOCHS} in src/vae.py, which retraining uses")
+
+    plot_path = RESULTS_DIR / "vae_training.png"  # part of experiment E3
+    if plot_path.exists():
+        print(f"Kept the existing {plot_path.name} (results are never overwritten)")
+    else:
+        plot_training(log1, best_epoch, plot_path)
 
 
 if __name__ == "__main__":

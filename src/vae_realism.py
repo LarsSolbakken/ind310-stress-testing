@@ -1,6 +1,8 @@
 """Check that VAE scenarios look like real returns, using the training period (2004-2018) only.
 
-  python -m src.vae_realism
+  python -m src.vae_realism --experiment E6_name   # results go to results/E6_name/ (must not exist)
+
+(The results of experiment E3 are the files results/vae_realism*.)
 
 1. Free-running simulation: N_PATHS synthetic histories as long as the training period, each new
    day generated from the model's own previous WINDOW days. Their stylized facts (fat tails, volatility
@@ -9,12 +11,15 @@
    2004-2018 against the real returns.
 The pass criteria in check() were fixed before looking at any results.
 """
+import argparse
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 from src.backtest import run_backtest
 from src.data import load_data
+from src.experiment import experiment_dir
 from src.portfolio import make_weights, portfolio_returns
 from src.var_models import var_es_from_scenarios
 from src.vae import SEED, WINDOW, ScenarioGenerator, VAEVaR, make_deterministic
@@ -182,6 +187,10 @@ def plot_conditional(train, gen, insample, path):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--experiment", required=True, help="name of the new results folder, e.g. E6_realism")
+    out = experiment_dir(parser.parse_args().experiment)  # stops if it already exists
+
     make_deterministic()
     train, _ = load_data()  # the test period is not used
     gen = ScenarioGenerator.load()
@@ -191,17 +200,19 @@ def main():
     table = pd.DataFrame({"Real": stylized_facts(train), "Sim median": sims.median(),
                           "Sim 5%": sims.quantile(0.05), "Sim 95%": sims.quantile(0.95)})
     table["Real in band"] = table["Real"].between(table["Sim 5%"], table["Sim 95%"])
-    table.to_csv("results/vae_realism.csv")
     print(table.round(3).to_string(), "\n")
 
     results = check(table, list(train.columns), paths)
     for name, ok in results.items():
         print(f"{'PASS' if ok else 'FAIL'}  {name}")
     print(f"{sum(results.values())} of {len(results)} criteria passed")
-
-    plot_stylized(train, paths, "results/vae_realism_stylized.png")
     insample = run_backtest(VAEVaR(), train, WEIGHTS, train.index[WINDOW], alphas=(0.01,))
-    plot_conditional(train, gen, insample, "results/vae_realism_conditional.png")
+
+    out.mkdir(parents=True)  # only now, so a crashed run leaves nothing behind
+    table.to_csv(out / "vae_realism.csv")
+    plot_stylized(train, paths, out / "vae_realism_stylized.png")
+    plot_conditional(train, gen, insample, out / "vae_realism_conditional.png")
+    print(f"Saved in {out}")
 
 
 if __name__ == "__main__":

@@ -88,7 +88,9 @@ def plot_backtest(results, alpha, path, title=""):
     import matplotlib.pyplot as plt
     from matplotlib.ticker import MaxNLocator
 
-    colors = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#6250d6"]  # fixed order
+    colors = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6"]  # palette order
+    if len(results) > len(colors):
+        raise ValueError(f"plot_backtest has {len(colors)} colours but got {len(results)} models")
     ink, muted, grid, surface = "#0b0b0b", "#52514e", "#e3e2de", "#fcfcfb"
     L = level(alpha)
     fig, axes = plt.subplots(len(results), 1, figsize=(11, 2.6 * len(results)),

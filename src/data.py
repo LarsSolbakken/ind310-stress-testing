@@ -16,7 +16,8 @@ DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 YF_CACHE = DATA_DIR / "yf_prices.csv"
 
 YF_TICKERS = {"SP500": "^GSPC", "BONDS": "AGG"}  # name -> Yahoo ticker
-START, END = "2004-01-01", "2025-01-01"  # END is exclusive in yfinance
+HOLDOUT_START = "2025-01-01"  # 2025 onwards is a final holdout: never downloaded or used
+START, END = "2004-01-01", HOLDOUT_START  # END is exclusive in yfinance
 SPLIT_DATE = "2018-12-31"  # train: up to and including this date, test: after
 
 # --- OSEBX from CSV (disabled for now) ---------------------------------------------
@@ -53,11 +54,19 @@ def download_prices(refresh=False):
     if YF_CACHE.exists() and not refresh:
         cached = pd.read_csv(YF_CACHE, index_col=0, parse_dates=True)
         if set(YF_TICKERS) <= set(cached.columns):  # cache covers all current assets
-            return cached[list(YF_TICKERS)]
+            return check_no_holdout(cached[list(YF_TICKERS)])
     raw = yf.download(list(YF_TICKERS.values()), start=START, end=END, auto_adjust=True, progress=False)
-    prices = raw["Close"].rename(columns={v: k for k, v in YF_TICKERS.items()})[list(YF_TICKERS)]
+    prices = check_no_holdout(raw["Close"].rename(columns={v: k for k, v in YF_TICKERS.items()})[list(YF_TICKERS)])
     DATA_DIR.mkdir(exist_ok=True)
     prices.to_csv(YF_CACHE)
+    return prices
+
+
+def check_no_holdout(prices):
+    """Stop if any data from the final holdout period (HOLDOUT_START onwards) is present."""
+    if prices.index.max() >= pd.Timestamp(HOLDOUT_START):
+        raise ValueError(f"Data from {HOLDOUT_START} or later found. That period is the final holdout "
+                         "and must not be downloaded or used.")
     return prices
 
 

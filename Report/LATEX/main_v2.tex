@@ -1,0 +1,195 @@
+\documentclass[12pt]{spieman}  % 12pt font required by SPIE;
+%\documentclass[a4paper,12pt]{spieman}  % use this instead for A4 paper
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage{tocloft}
+\usepackage{soul}
+% v2: text changed to match the code repository is highlighted in yellow with \new{...}
+\sethlcolor{yellow}
+\soulregister\cite7
+\soulregister\ref7
+\newcommand{\new}[1]{\hl{#1}}
+% for display equations that are new: yellow box
+\newcommand{\neweq}[1]{\colorbox{yellow}{$\displaystyle #1$}}
+
+\title{Generative AI and GANs for Stress Testing and Synthetic Tail-Risk Generation}
+
+\author[a]{First Student}
+\author[a]{Second Student}
+\affil[a]{Norwegian University of Life Sciences, REALTEK, Industrial Economics (INDØK)}
+
+\renewcommand{\cftdotsep}{\cftnodots}
+\cftpagenumbersoff{figure}
+\cftpagenumbersoff{table}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Standard historical backtesting and parametric risk models frequently fail to capture rare, non-stationary market shocks. The limitation stems from the short history of financial time series, which restricts both the number of observable crisis events and the feasible horizon for analysis. This project addresses the resulting underestimation of extreme risk and aims to help pension funds and asset managers calibrate their risk models on richer input data. \new{We build a conditional Variational Autoencoder (VAE) with a fat-tailed Student-t decoder that generates scenarios for the next day's joint stock and bond returns, given a summary of the last 60 trading days. A Generative Adversarial Network (GAN) is planned as an extension. The model is trained on daily S\&P~500 and US aggregate bond (AGG) returns from 2004 to 2018 and evaluated out of sample on 2019--2024.} \new{One-day Value-at-Risk (VaR) and Expected Shortfall (ES) at 99\% and 95\% are forecast for three stock/bond portfolios and compared with Historical Simulation, a normal model and GARCH models. Before backtesting, the scenarios must pass a realism check with six criteria fixed in advance; forecasts are then evaluated with the Kupiec and Christoffersen tests.} \new{Preliminary results show that the VAE behaves similarly to a GARCH-t model: violations are not clustered, but there are more than expected, and no VAE variant passes the Kupiec test.} The results aim to give Risk and Asset-Liability Management (ALM) teams \new{insight into whether generative models can support} stress testing consistent with the Solvency~II framework.
+\end{abstract}
+
+\keywords{\new{Variational autoencoders}, generative adversarial networks, stress testing, Value-at-Risk, Expected Shortfall, Solvency II}
+
+{\noindent \footnotesize\textbf{*}Students Emails,  \linkable{firststudent@university.edu, studentemail@university.edu} }
+
+\begin{spacing}{2}   % use double spacing for rest of manuscript
+
+\section{Introduction}
+\label{sect:intro}
+
+\subsection{Background}
+\label{sect:background}
+
+Institutional investors, particularly pension funds and asset managers operating under European regulation, follow strict guidelines for risk management and are required to hold capital buffers that can absorb market shocks. For Norwegian life insurers and pension providers such as KLP and Storebrand, the governing framework is Solvency~II \cite{SolvencyII, Regjeringen08}. Central to this framework is the Solvency Capital Requirement (SCR), which is calibrated to a 99.5\% Value-at-Risk (VaR) over a one-year horizon, i.e.\ the capital needed to survive a loss event expected roughly once every 200 years. Internal models used for risk budgeting and stress testing also increasingly rely on Expected Shortfall (ES), which measures the average loss beyond the VaR threshold and is a coherent risk measure \cite{Artzner99}.
+
+A fundamental bottleneck is the scarcity of historical crisis data. \new{A 21-year daily sample from 2004 to 2024} contains only a handful of genuinely systemic episodes, such as the 2008 Global Financial Crisis, the 2020 COVID-19 liquidity shock and the rapid interest-rate hikes of 2022. Estimating a 1-in-200-year loss from such a sample means extrapolating far beyond the data. When relying on historical simulation, we implicitly assume that future crises will replicate past trajectories. Parametric alternatives do not solve the problem either: Gaussian or log-normal models are known to underestimate the probability of extreme returns, because empirical asset returns are fat-tailed, exhibit volatility clustering and show correlations that rise sharply in market downturns \cite{Cont01}. As a result, joint cross-asset tail dependence during liquidity freezes is systematically underestimated.
+
+This project explores whether deep generative models can help overcome these limitations. Generative Adversarial Networks (GANs) \cite{Goodfellow14} and Variational Autoencoders (VAEs) \cite{KingmaWelling14} learn the underlying multi-dimensional probability distribution of the data and can sample new observations from it. Applied to multi-asset return series, conditional generative models can in principle synthesise plausible stress scenarios \new{that are more varied than the historical record, while remaining consistent with the statistical properties of financial markets. This project uses a VAE as the main model, because it trains stably and gives an explicit likelihood that can be used for model selection; a GAN is planned as an extension.}
+
+\subsection{Problem Statement and Stakeholders}
+\label{sect:problem}
+
+The direct stakeholders of this research are Risk Management and Asset-Liability Management (ALM) teams at Nordic pension funds and other asset management institutions, for example KLP Kapitalforvaltning and Storebrand Asset Management. Their operational context consists of periodic Solvency~II capital adequacy reporting, internal stress testing and Strategic Asset Allocation (SAA) risk budgeting. The operational bottleneck today is the inability of historical backtesting to evaluate non-stationary, joint multi-asset shocks, which can lead to under-calibrated capital buffers during tail events.
+
+The consequences of mis-estimating tail risk go in both directions. Under-calibrated models lead to unexpected VaR breaches during systemic shocks, which may trigger supervisory follow-up from Finanstilsynet, forced asset sales to restore solvency ratios, and reputational damage. Conversely, overly conservative assumptions lock up excess capital in low-yielding buffers, which reduces long-term returns for pension beneficiaries. The core question facing risk managers is therefore how portfolios can be stressed against realistic but unobserved regime shifts without relying on arbitrary, manually designed scenarios.
+
+\new{The study uses a simplified version of a pension-fund portfolio: global equities represented by the S\&P~500 and bonds represented by a broad US bond index (AGG), combined in 50/50, 20/80 and 80/20 stock/bond mixes. Nordic assets such as OSEBX are not used because long daily histories are not freely available before 2013; the stock/bond trade-off is nevertheless the core of any pension fund's SAA.}
+
+\subsection{Research Questions}
+\label{sect:rq}
+
+To address this problem, the project formulates one primary research question (PRQ), supported by three sub-questions (SQs):
+
+\begin{description}
+\item[PRQ:] How effectively can \new{deep generative models, in particular a conditional Variational Autoencoder (VAE),} generate realistic synthetic tail-risk scenarios to improve Value-at-Risk (VaR) calibration and stress testing for institutional multi-asset portfolios?
+\item[SQ1 (Statistical fidelity):] To what extent can \new{a conditional VAE with a Student-t decoder reproduce fat tails, volatility clustering and the stock-bond correlation, measured by a realism check with criteria fixed in advance?}
+\item[SQ2 (Backtesting performance):] \new{Do VaR and ES forecasts from VAE scenarios give the correct number of violations (Kupiec test) without clustering (Christoffersen test), compared with Historical Simulation, a normal model and GARCH models?}
+\item[SQ3 (Operational utility):] How can synthetic stress scenarios be integrated into ALM and SAA workflows to support capital buffer allocation under Solvency~II\new{, for example through CVaR portfolio optimization?}
+\end{description}
+
+\subsection{Related Work}
+\label{sect:related}
+
+Quantitative risk management has traditionally relied on three paradigms for scenario generation: Historical Simulation (HS), parametric or Monte Carlo models, and Extreme Value Theory (EVT). Historical Simulation, including its filtered variant \cite{BaroneAdesi99}, remains the industry benchmark due to its non-parametric simplicity, but it can never produce a loss larger than the worst observed one. \new{GARCH models \cite{Bollerslev86} capture volatility clustering, and with Student-t errors also part of the fat tails.} McNeil and Frey \cite{McNeilFrey00} combined GARCH volatility filtering with EVT, fitting a Generalized Pareto Distribution (GPD) to standardised residuals, and showed that this captures univariate fat tails well. Extending GARCH-EVT to high-dimensional portfolios, however, requires copula models, which struggle to represent state-dependent correlation breakdowns during crises.
+
+Deep generative modelling offers an alternative. Following the introduction of GANs by Goodfellow et al.\ \cite{Goodfellow14}, Arjovsky et al.\ \cite{Arjovsky17} and Gulrajani et al.\ \cite{Gulrajani17} proposed the Wasserstein GAN and its gradient-penalty variant to stabilise training and reduce mode collapse. Yoon et al.\ \cite{Yoon19} developed TimeGAN, which combines adversarial training with a supervised loss in a learned latent space to preserve temporal dynamics. In finance, Wiese et al.\ \cite{Wiese20} introduced Quant GANs, using temporal convolutional networks to generate return series that reproduce stylised facts such as heavy tails and volatility clustering. \new{Variational Autoencoders \cite{KingmaWelling14} take a likelihood-based approach instead of an adversarial one, and TimeVAE \cite{Desai21} adapts them to multivariate time series. VAEs are easier to train than GANs, but with the usual Gaussian output distribution they tend to smooth out the tails.}
+
+Despite these advances, a gap remains. Generative models are typically trained and evaluated on the full return distribution, where the bulk of the data lies close to the centre, so the extreme tails are under-represented and often smoothed out. There is limited empirical research that evaluates \new{generative} scenarios specifically on their tail behaviour and benchmarks them against \new{standard VaR and ES backtests} for multi-asset institutional portfolios. This project aims to contribute to closing that gap.
+
+\section{Theoretical Framework}
+\label{sect:theory}
+
+The theoretical foundation of the project combines quantitative risk measures, \new{volatility models} and deep generative models for time series.
+
+\subsection{Returns and Stylised Facts}
+
+Let $P_t$ denote the price of an asset at day $t$. We work with \new{simple returns}
+\begin{equation}
+\neweq{r_t = \frac{P_t}{P_{t-1}} - 1,}
+\end{equation}
+\new{because the return of a portfolio is then exactly the weighted sum of the asset returns, $r^{p}_t = \sum_i w_i r_{i,t}$, for a portfolio rebalanced daily to weights $w_i$.} Empirical return series display a set of well-documented stylised facts \cite{Cont01}: heavy tails, volatility clustering (large returns tend to be followed by large returns), asymmetry between gains and losses, and increasing cross-asset correlation in falling markets. A realistic scenario generator must reproduce these properties, in particular in the tails.
+
+\subsection{Value-at-Risk and Expected Shortfall}
+
+Let $L$ denote the portfolio loss over a given horizon. For a confidence level $\alpha \in (0,1)$, Value-at-Risk is the $\alpha$-quantile of the loss distribution,
+\begin{equation}
+\mathrm{VaR}_\alpha(L) = \inf\{\, l \in \mathbb{R} : P(L > l) \le 1-\alpha \,\},
+\end{equation}
+that is, the smallest loss that is exceeded with probability at most $1-\alpha$. Under Solvency~II, $\alpha = 0.995$ and the horizon is one year \cite{SolvencyII}.
+
+VaR says nothing about how large losses are once the threshold is exceeded, and it is not sub-additive in general \cite{Artzner99}. Expected Shortfall addresses both issues by averaging over the tail:
+\begin{equation}
+\mathrm{ES}_\alpha(L) = \frac{1}{1-\alpha}\int_\alpha^1 \mathrm{VaR}_u(L)\,du,
+\end{equation}
+which for continuous loss distributions equals $\mathbb{E}[\,L \mid L \ge \mathrm{VaR}_\alpha(L)\,]$. Both measures depend entirely on the shape of the far tail, which is exactly where historical data are scarce.
+
+\new{This project forecasts one-day VaR and ES at 99\% and 95\%, not the one-year 99.5\% figure used for the SCR. A one-year horizon gives only a handful of independent observations, so a model cannot be backtested on it. Daily forecasts give about 1,500 test days and allow formal tests of whether the model is well calibrated. A model that cannot predict daily tail risk correctly is unlikely to be reliable at longer horizons, so the daily backtest is a necessary first step.} \new{Given $N$ generated scenarios of portfolio loss, VaR is estimated as the empirical $\alpha$-quantile of the scenarios and ES as the average of the scenarios above it.}
+
+\subsection{\protect\colorbox{yellow}{Volatility Models and} Extreme Value Theory}
+
+\new{Several of the baseline models are based on GARCH(1,1) \cite{Bollerslev86},}
+\begin{equation}
+\neweq{r_t = \mu + \sigma_t z_t, \qquad \sigma_t^2 = \omega + a\, (r_{t-1}-\mu)^2 + b\, \sigma_{t-1}^2,}
+\end{equation}
+\new{where today's variance depends on yesterday's squared shock and variance, which produces volatility clustering. The innovations $z_t$ are either standard normal (GARCH-normal) or Student-t (GARCH-t); the Student-t distribution has fatter tails, controlled by the degrees of freedom $\nu$.}
+
+Extreme Value Theory provides the classical statistical answer to tail estimation \cite{Embrechts97}. By the Pickands--Balkema--de Haan theorem, the distribution of exceedances over a sufficiently high threshold $u$ is approximately Generalized Pareto,
+\begin{equation}
+G_{\xi,\beta}(y) = 1 - \left(1 + \frac{\xi y}{\beta}\right)^{-1/\xi}, \qquad y \ge 0,
+\end{equation}
+where $\xi$ is the shape (tail index) and $\beta$ the scale parameter. A positive $\xi$ indicates a heavy, power-law tail. In the GARCH-EVT approach \cite{McNeilFrey00}, the GPD is fitted to the tail of the standardised GARCH residuals $z_t$. \new{EVT is included here as background on tail modelling; it is not one of the baselines in this project.}
+
+\subsection{\protect\colorbox{yellow}{Variational Autoencoders}}
+
+\new{A VAE \cite{KingmaWelling14} assumes that each observation $x$ is generated from a low-dimensional latent variable $z$ with a simple prior $p(z) = \mathcal{N}(0, I)$. A decoder network gives the distribution $p_\theta(x \mid z)$, and an encoder network $q_\phi(z \mid x)$ approximates the posterior. Since the exact likelihood cannot be computed, both networks are trained by maximising the evidence lower bound (ELBO):}
+\begin{equation}
+\neweq{\ln p_\theta(x) \ge \mathbb{E}_{q_\phi(z\mid x)}\left[\ln p_\theta(x\mid z)\right] - \mathrm{KL}\left(q_\phi(z\mid x)\,\|\,p(z)\right).}
+\end{equation}
+\new{The first term rewards accurate reconstruction, the second keeps the latent codes close to the prior so that new samples can be drawn by sampling $z \sim p(z)$ and passing it through the decoder.}
+
+\new{In a conditional VAE, both networks also receive a condition $c$, so the model learns $p_\theta(x \mid z, c)$. In this project, $x$ is tomorrow's vector of stock and bond returns and $c$ summarises the last 60 trading days (realised volatility over 5, 20 and 60 days, recent returns and the stock-bond correlation). The model can therefore produce calm scenarios in calm markets and wide scenarios in turbulent ones.}
+
+\new{Two modifications are needed for financial data. First, with the usual normal decoder the generated returns have almost no fat tails. The decoder is therefore a multivariate Student-t distribution whose degrees of freedom are learned. Second, VAEs often ignore the latent variable altogether (posterior collapse). This is prevented with "free bits": each latent dimension is allowed a small amount of KL divergence without penalty. Finally, conditions that lie outside the range seen in training are clipped to that range when scenarios are generated, which keeps the model stable but also means that it cannot describe a market more extreme than the worst one in its training data.}
+
+\subsection{Generative Adversarial Networks}
+
+\new{GANs are planned as an extension and are described here for comparison.} A GAN \cite{Goodfellow14} consists of two neural networks trained against each other. The generator $G$ maps random noise $z \sim P_z$ to synthetic samples $G(z)$, while the discriminator $D$ tries to distinguish real samples $x \sim P_r$ from generated ones. The two networks play the minimax game
+\begin{equation}
+\min_G \max_D \; \mathbb{E}_{x\sim P_r}[\ln D(x)] + \mathbb{E}_{z\sim P_z}[\ln(1 - D(G(z)))].
+\end{equation}
+At the optimum, the generator distribution equals the data distribution. In practice, the original GAN is unstable to train and prone to mode collapse, where the generator produces only a few typical patterns. For tail-risk modelling this is particularly harmful, since the rare extreme observations are exactly the modes that tend to be dropped.
+
+\subsubsection{Wasserstein GAN with Gradient Penalty}
+
+The Wasserstein GAN \cite{Arjovsky17} replaces the discriminator with a critic that estimates the Wasserstein-1 (Earth Mover's) distance between the real and generated distributions. This distance provides meaningful gradients even when the two distributions barely overlap. The critic must be 1-Lipschitz, which Gulrajani et al.\ \cite{Gulrajani17} enforce through a gradient penalty. The critic loss becomes
+\begin{equation}
+\mathcal{L}_D = \mathbb{E}_{z\sim P_z}[D(G(z))] - \mathbb{E}_{x\sim P_r}[D(x)] + \lambda\, \mathbb{E}_{\hat{x}\sim P_{\hat{x}}}\left[\left(\lVert \nabla_{\hat{x}} D(\hat{x}) \rVert_2 - 1\right)^2\right],
+\end{equation}
+where $\hat{x}$ is sampled uniformly on straight lines between real and generated samples and $\lambda$ controls the strength of the penalty. WGAN-GP gives more stable training and better coverage of sparse regions of the distribution.
+
+\subsubsection{TimeGAN}
+
+Standard GANs treat each sample independently and therefore ignore the temporal dependence that is central to financial crises, where losses build up over consecutive days. TimeGAN \cite{Yoon19} addresses this by combining four components: an embedding and a recovery network that map sequences to and from a latent space, and a generator and discriminator that operate in that latent space. In addition to the adversarial loss, a supervised loss forces the generator to predict the next latent state from the previous ones, so that the synthetic sequences preserve the step-wise dynamics of the real data. This makes TimeGAN suitable for generating multi-day, multi-asset stress paths.
+
+\subsection{Backtesting of Risk Models}
+
+To judge whether \new{the generated scenarios give well-calibrated risk forecasts}, the models are backtested out of sample. Let $x$ denote the number of days, out of $T$, on which the realised loss exceeds the VaR forecast. If the model is correctly calibrated, $x$ follows a binomial distribution with exception probability $p = 1-\alpha$. Kupiec's proportion-of-failures test \cite{Kupiec95} uses the likelihood ratio
+\begin{equation}
+LR_{POF} = -2\ln\left[\frac{(1-p)^{T-x}\,p^{x}}{\left(1-\frac{x}{T}\right)^{T-x}\left(\frac{x}{T}\right)^{x}}\right] \sim \chi^2_1,
+\end{equation}
+and rejects the model if the observed exception rate deviates significantly from the expected one. Too many exceptions indicate that risk is underestimated, while too few indicate an overly conservative model.
+
+\new{A model can have the right number of violations but still have them bunched together in a crisis, which is exactly when losses are most dangerous. Christoffersen's independence test \cite{Christoffersen98} checks this. Let $\pi_{01}$ be the probability of a violation on the day after a day without one, and $\pi_{11}$ the probability of a violation on the day after a violation. Under the null hypothesis of independence, $\pi_{01} = \pi_{11}$, and the likelihood ratio}
+\begin{equation}
+\neweq{LR_{ind} = -2\ln\left[\frac{(1-\hat\pi)^{n_{00}+n_{10}}\,\hat\pi^{\,n_{01}+n_{11}}}{(1-\hat\pi_{01})^{n_{00}}\,\hat\pi_{01}^{\,n_{01}}\,(1-\hat\pi_{11})^{n_{10}}\,\hat\pi_{11}^{\,n_{11}}}\right] \sim \chi^2_1}
+\end{equation}
+\new{is compared with a $\chi^2_1$ distribution, where $n_{ij}$ counts days in state $j$ following a day in state $i$ (1 = violation) and $\hat\pi$ is the overall violation rate.}
+
+\section{Methodology}
+
+Describe the methods and procedures you used to approach and solve the problem.
+
+\section{Data Description}
+
+Present information about how you collected the data.
+
+\section{Results}
+
+Present and describe the findings of your analysis.
+
+\section{Discussion}
+
+Interpret the results, discuss their implications, and relate them to the existing works.
+
+\section{Conclusion}
+
+Summarize the main findings, their significance, and suggest areas for future work.
+
+%%%%% References %%%%%
+
+\bibliography{references_v2}   % bibliography data in references_v2.bib
+\bibliographystyle{spiejour}   % makes bibtex use spiejour.bst
+
+\end{spacing}
+\end{document}

@@ -1,0 +1,48 @@
+This is BibTeX, Version 0.99e (TeX Live 2026)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main_v2.aux
+The style file: spiejour.bst
+Database file #1: references_v2.bib
+Warning--empty volume in Desai21
+You've used 17 entries,
+            2022 wiz_defined-function locations,
+            612 strings with 6298 characters,
+and the built_in function-call counts, 4591 in all, are:
+= -- 437
+> -- 179
+< -- 0
++ -- 84
+- -- 42
+* -- 376
+:= -- 614
+add.period$ -- 17
+call.type$ -- 17
+change.case$ -- 16
+chr.to.int$ -- 0
+cite$ -- 18
+duplicate$ -- 230
+empty$ -- 448
+format.name$ -- 53
+if$ -- 1131
+int.to.chr$ -- 0
+int.to.str$ -- 17
+missing$ -- 16
+newline$ -- 54
+num.names$ -- 17
+pop$ -- 80
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 176
+stack$ -- 0
+substring$ -- 252
+swap$ -- 115
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 1
+while$ -- 35
+width$ -- 19
+write$ -- 146
+(There was 1 warning)

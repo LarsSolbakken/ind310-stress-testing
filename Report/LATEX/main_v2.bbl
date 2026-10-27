@@ -1,0 +1,54 @@
+\begin{thebibliography}{10}
+
+\bibitem{SolvencyII}
+{European Parliament and Council}, ``Directive 2009/138/{EC} on the taking-up and pursuit of the business of insurance and reinsurance (solvency {II}).'' Official Journal of the European Union, L 335  (2009).
+
+\bibitem{Regjeringen08}
+{Regjeringen}, ``Solvens {II}-direktivet ({EØS}-notat).'' \linkable{https://www.regjeringen.no/no/sub/eos-notatbasen/notatene/2008/apr/solvens-ii-direktivet/id2434222/}  (2008).
+
+\bibitem{Artzner99}
+P.~Artzner, F.~Delbaen, J.-M. Eber, {\em et~al.}, ``Coherent measures of risk,'' {\em Mathematical Finance} {\bf 9}(3), 203--228  (1999).
+
+\bibitem{Cont01}
+R.~Cont, ``Empirical properties of asset returns: stylized facts and statistical issues,'' {\em Quantitative Finance} {\bf 1}(2), 223--236  (2001).
+
+\bibitem{Goodfellow14}
+I.~Goodfellow, J.~Pouget-Abadie, M.~Mirza, {\em et~al.}, ``Generative adversarial nets,'' in {\em Advances in Neural Information Processing Systems},   {\bf 27}  (2014).
+
+\bibitem{KingmaWelling14}
+D.~P. Kingma and M.~Welling, ``Auto-encoding variational {B}ayes,'' in {\em International Conference on Learning Representations (ICLR)},   (2014).
+
+\bibitem{BaroneAdesi99}
+G.~Barone-Adesi, K.~Giannopoulos, and L.~Vosper, ``{VaR} without correlations for portfolios of derivative securities,'' {\em Journal of Futures Markets} {\bf 19}(5), 583--602  (1999).
+
+\bibitem{Bollerslev86}
+T.~Bollerslev, ``Generalized autoregressive conditional heteroskedasticity,'' {\em Journal of Econometrics} {\bf 31}(3), 307--327  (1986).
+
+\bibitem{McNeilFrey00}
+A.~J. McNeil and R.~Frey, ``Estimation of tail-related risk measures for heteroscedastic financial time series: an extreme value approach,'' {\em Journal of Empirical Finance} {\bf 7}(3-4), 271--300  (2000).
+
+\bibitem{Arjovsky17}
+M.~Arjovsky, S.~Chintala, and L.~Bottou, ``{W}asserstein generative adversarial networks,'' in {\em Proceedings of the 34th International Conference on Machine Learning},  214--223  (2017).
+
+\bibitem{Gulrajani17}
+I.~Gulrajani, F.~Ahmed, M.~Arjovsky, {\em et~al.}, ``Improved training of {W}asserstein {GAN}s,'' in {\em Advances in Neural Information Processing Systems},   {\bf 30}  (2017).
+
+\bibitem{Yoon19}
+J.~Yoon, D.~Jarrett, and M.~van~der Schaar, ``Time-series generative adversarial networks,'' in {\em Advances in Neural Information Processing Systems},   {\bf 32}  (2019).
+
+\bibitem{Wiese20}
+M.~Wiese, R.~Knobloch, R.~Korn, {\em et~al.}, ``Quant {GAN}s: deep generation of financial time series,'' {\em Quantitative Finance} {\bf 20}(9), 1419--1440  (2020).
+
+\bibitem{Desai21}
+A.~Desai, C.~Freeman, Z.~Wang, {\em et~al.}, ``{TimeVAE}: A variational auto-encoder for multivariate time series generation,'' {\em arXiv preprint arXiv:2111.08095}   (2021).
+
+\bibitem{Embrechts97}
+P.~Embrechts, C.~Kl{\"u}ppelberg, and T.~Mikosch, {\em Modelling Extremal Events for Insurance and Finance}, Springer, Berlin  (1997).
+
+\bibitem{Kupiec95}
+P.~H. Kupiec, ``Techniques for verifying the accuracy of risk measurement models,'' {\em The Journal of Derivatives} {\bf 3}(2), 73--84  (1995).
+
+\bibitem{Christoffersen98}
+P.~F. Christoffersen, ``Evaluating interval forecasts,'' {\em International Economic Review} {\bf 39}(4), 841--862  (1998).
+
+\end{thebibliography}

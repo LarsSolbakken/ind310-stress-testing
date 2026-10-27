@@ -1,0 +1,72 @@
+\documentclass[12pt]{spieman}  % 12pt font required by SPIE;
+%\documentclass[a4paper,12pt]{spieman}  % use this instead for A4 paper
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage{tocloft}
+
+\title{Title of Your Course Project}
+
+\author[a]{First Student}
+\author[a]{Second Student}
+\affil[a]{Norwegian University of Life Sciences, REALTEK, Industrial Economics (INDØK)}
+
+\renewcommand{\cftdotsep}{\cftnodots}
+\cftpagenumbersoff{figure}
+\cftpagenumbersoff{table} 
+\begin{document} 
+\maketitle
+
+\begin{abstract}
+A brief summary of the project, including the main objectives, methods, results, and conclusions.
+\end{abstract}
+
+% Include a list of up to six keywords after the abstract
+%\keywords{Investment, aquaculture, decision making, solar cells, sustainability, triage}
+
+% Include email contact information for corresponding author
+{\noindent \footnotesize\textbf{*}Students Emails,  \linkable{firststudent@university.edu, studentemail@university.edu} }
+
+\begin{spacing}{2}   % use double spacing for rest of manuscript
+
+\section{Introduction}
+\label{sect:intro}  
+
+Provide background information, the purpose of the project, and the research questions. This section should also provide the descriptions of a few published related works. These could be research papers or reports.
+
+You can cite references from the literature. For example, Alred et al. \cite{Alred03} did this. Goossens et al. \cite{Goossens97} did this.
+
+\section{Methodology}
+
+Describe the methods and procedures you used to approach and solve the problem. 
+
+You can also cite references in this section and in the other sections. For example, Alred et al. \cite{Alred03} did this. Goossens et al. \cite{Goossens97} did this.
+
+
+\section{Data Description}
+
+Present information about how you collected the data ? Is the data publically available ? Is the data ready to use ? Did you pre-process the data, why ? You need to provide comprehensive information about the data.
+
+\section{Results}
+
+Present and describe the findings of your analysis. It could consist of charts, figures, tables, graphs, and comparative analysis.
+
+\section{Discussion}
+
+Interpret the results, discuss their implications, and relate them to the existing works.
+
+\section{Conclusion}
+
+Summarize the main findings, their significance, and suggest areas for future work.
+
+%%%%% References %%%%%
+
+\bibliography{report}   % bibliography data in report.bib
+\bibliographystyle{spiejour}   % makes bibtex use spiejour.bst
+
+%%%%% Biographies of authors %%%%%
+
+
+
+\end{spacing}
+\end{document}
